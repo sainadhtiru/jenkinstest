@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+                echo "Workspace Dir: $WORKSPACE"
+                sh 'ls $WORKSPACE'
+            }
+        }
+        
+//         stage ('Zip artifact') {
+//             steps {
+//                 sh '''
+//                 cd $WORKSPACE
+//                 zip -r /tmp/test.zip .
+//                 '''
+//             }
+//         }
+        
+        stage('Deploy') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: "iis-windows-ssh-private-key", keyFileVariable: 'keyfile')]) {
+                   echo 'Deploying...'
+                   echo 'Copying files through ssh file...'
+                    sh 'scp -o StrictHostKeyChecking=no -r -i ${keyfile} /var/lib/jenkins/workspace/test/* Administrator@100.25.166.98:/C:/inetpub/wwwroot/mywebsite/'
+                }
+           }
+       }
+        
+        stage('Done') {
+            steps {
+                echo 'Done...'
+            }
+        }
+    }
+}
